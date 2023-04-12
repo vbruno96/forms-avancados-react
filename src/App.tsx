@@ -4,8 +4,16 @@ import './styles/golbal.css'
 import { useForm, useFieldArray } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { supabase } from './lib/supabase'
 
 const createUserFormSchema = z.object({
+  avatar: z
+    .instanceof(FileList)
+    .transform((list) => list.item(0)!)
+    .refine(
+      (file) => file.size <= 5 * 1024 * 1024,
+      'O tamanoho maximo do arquive e 5Mb',
+    ),
   name: z
     .string()
     .nonempty('Nome obrigatorio')
@@ -45,7 +53,7 @@ export function App() {
     register,
     handleSubmit,
     control,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<CreateUserFormData>({
     resolver: zodResolver(createUserFormSchema),
   })
@@ -55,7 +63,8 @@ export function App() {
     name: 'techs',
   })
 
-  function createUser(data: CreateUserFormData) {
+  async function createUser(data: CreateUserFormData) {
+    await supabase.storage.from('avatar').upload(data.avatar.name, data.avatar)
     setOutput(JSON.stringify(data, null, 2))
   }
 
@@ -70,7 +79,17 @@ export function App() {
         className="flex flex-col gap-4 w-full max-w-xs"
       >
         <div className="flex flex-col gap-1">
-          <label htmlFor="">Nome</label>
+          <label htmlFor="avatar">Avatar</label>
+          <input type="file" accept="image/*" {...register('avatar')} />
+          {errors.avatar && (
+            <span className="text-red-500 text-sm">
+              {errors.avatar.message}
+            </span>
+          )}
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <label htmlFor="name">Nome</label>
           <input
             className="border bg-zinc-800 border-slate-500 text-zinc-100 shadow-sm rounded h-10 px-3"
             type="text"
@@ -82,7 +101,7 @@ export function App() {
         </div>
 
         <div className="flex flex-col gap-1">
-          <label htmlFor="">E-mail</label>
+          <label htmlFor="email">E-mail</label>
           <input
             className="border bg-zinc-800 border-slate-500 text-zinc-100 shadow-sm rounded h-10 px-3"
             type="email"
@@ -94,7 +113,7 @@ export function App() {
         </div>
 
         <div className="flex flex-col gap-1">
-          <label htmlFor="">Senha</label>
+          <label htmlFor="password">Senha</label>
           <input
             className="border bg-zinc-800 border-slate-500 text-zinc-100 shadow-sm rounded h-10 px-3"
             type="password"
@@ -157,7 +176,8 @@ export function App() {
         </div>
 
         <button
-          className="bg-emerald-500 rounded font-semibold text-white h-10 hover:bg-emerald-600"
+          disabled={isSubmitting}
+          className="bg-emerald-500 rounded font-semibold text-white h-10 hover:bg-emerald-600 disabled:opacity-10 disabled:cursor-not-allowed"
           type="submit"
         >
           Salvar
