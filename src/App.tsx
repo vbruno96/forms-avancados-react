@@ -1,3 +1,5 @@
+import './styles/golbal.css'
+
 export function App() {
 
   return (
