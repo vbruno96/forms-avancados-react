@@ -72,6 +72,10 @@ export function App() {
     append({ title: '', knowledge: 0 })
   }
 
+  function removeTech(index: number) {
+    remove(index)
+  }
+
   return (
     <main className="h-screen bg-slate-900 text-zinc-100 flex flex-col gap-4 items-center justify-center">
       <form
@@ -165,6 +169,13 @@ export function App() {
                   </span>
                 )}
               </div>
+              <button
+                className="text-red-500 text-lg"
+                onClick={() => removeTech(index)}
+                type="button"
+              >
+                ⨉
+              </button>
             </div>
           ))}
 
