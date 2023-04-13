@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import './styles/golbal.css'
-
-import { useForm, useFieldArray } from 'react-hook-form'
+import { useForm, useFieldArray, FormProvider } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { supabase } from './lib/supabase'
+import { Form } from './components/Form'
+import './styles/golbal.css'
 
 const createUserFormSchema = z.object({
   avatar: z
@@ -49,14 +49,15 @@ type CreateUserFormData = z.infer<typeof createUserFormSchema>
 export function App() {
   const [output, setOutput] = useState('')
 
-  const {
-    register,
-    handleSubmit,
-    control,
-    formState: { errors, isSubmitting },
-  } = useForm<CreateUserFormData>({
+  const createUserForm = useForm<CreateUserFormData>({
     resolver: zodResolver(createUserFormSchema),
   })
+
+  const {
+    handleSubmit,
+    formState: { isSubmitting },
+    control,
+  } = createUserForm
 
   const { fields, append, remove } = useFieldArray({
     control,
@@ -78,122 +79,74 @@ export function App() {
 
   return (
     <main className="h-screen bg-slate-900 text-zinc-100 flex flex-col gap-4 items-center justify-center">
-      <form
-        onSubmit={handleSubmit(createUser)}
-        className="flex flex-col gap-4 w-full max-w-xs"
-      >
-        <div className="flex flex-col gap-1">
-          <label htmlFor="avatar">Avatar</label>
-          <input type="file" accept="image/*" {...register('avatar')} />
-          {errors.avatar && (
-            <span className="text-red-500 text-sm">
-              {errors.avatar.message}
-            </span>
-          )}
-        </div>
-
-        <div className="flex flex-col gap-1">
-          <label htmlFor="name">Nome</label>
-          <input
-            className="border bg-zinc-800 border-slate-500 text-zinc-100 shadow-sm rounded h-10 px-3"
-            type="text"
-            {...register('name')}
-          />
-          {errors.name && (
-            <span className="text-red-500 text-sm">{errors.name.message}</span>
-          )}
-        </div>
-
-        <div className="flex flex-col gap-1">
-          <label htmlFor="email">E-mail</label>
-          <input
-            className="border bg-zinc-800 border-slate-500 text-zinc-100 shadow-sm rounded h-10 px-3"
-            type="email"
-            {...register('email')}
-          />
-          {errors.email && (
-            <span className="text-red-500 text-sm">{errors.email.message}</span>
-          )}
-        </div>
-
-        <div className="flex flex-col gap-1">
-          <label htmlFor="password">Senha</label>
-          <input
-            className="border bg-zinc-800 border-slate-500 text-zinc-100 shadow-sm rounded h-10 px-3"
-            type="password"
-            {...register('password')}
-          />
-          {errors.password && (
-            <span className="text-red-500 text-sm">
-              {errors.password.message}
-            </span>
-          )}
-        </div>
-
-        <div className="flex flex-col gap-1">
-          <label htmlFor="" className="flex items-center justify-between">
-            Tecnologias
-            <button
-              type="button"
-              onClick={addNewTech}
-              className="text-emerald-500 text-sm"
-            >
-              Adicionar
-            </button>
-          </label>
-
-          {fields.map((field, index) => (
-            <div className="flex gap-2" key={field.id}>
-              <div className="flex-1 flex flex-col gap-1">
-                <input
-                  className="border bg-zinc-800 border-slate-500 text-zinc-100 shadow-sm rounded h-10 px-3"
-                  type="text"
-                  {...register(`techs.${index}.title`)}
-                />
-                {errors.techs?.[index]?.title && (
-                  <span className="text-red-500 text-sm">
-                    {errors.techs?.[index]?.title?.message}
-                  </span>
-                )}
-              </div>
-
-              <div className="flex flex-col gap-1">
-                <input
-                  className="w-16 border bg-zinc-800 border-slate-500 text-zinc-100 shadow-sm rounded h-10 px-3"
-                  type="number"
-                  {...register(`techs.${index}.knowledge`)}
-                />
-                {errors.techs?.[index]?.knowledge && (
-                  <span className="text-red-500 text-sm">
-                    {errors.techs?.[index]?.knowledge?.message}
-                  </span>
-                )}
-              </div>
-              <button
-                className="text-red-500 text-lg"
-                onClick={() => removeTech(index)}
-                type="button"
-              >
-                ⨉
-              </button>
-            </div>
-          ))}
-
-          {errors.techs && (
-            <span className="text-red-500 text-sm">
-              {errors.techs?.message}
-            </span>
-          )}
-        </div>
-
-        <button
-          disabled={isSubmitting}
-          className="bg-emerald-500 rounded font-semibold text-white h-10 hover:bg-emerald-600 disabled:opacity-10 disabled:cursor-not-allowed"
-          type="submit"
+      <FormProvider {...createUserForm}>
+        <form
+          onSubmit={handleSubmit(createUser)}
+          className="flex flex-col gap-4 w-full max-w-xs"
         >
-          Salvar
-        </button>
-      </form>
+          <Form.Field>
+            <Form.Label htmlFor="avatar">Avatar</Form.Label>
+            <Form.Input type="file" name="avatar" />
+            <Form.ErrorMessage field="avatar" />
+          </Form.Field>
+
+          <Form.Field>
+            <Form.Label htmlFor="name">Nome</Form.Label>
+            <Form.Input type="text" name="name" />
+            <Form.ErrorMessage field="name" />
+          </Form.Field>
+
+          <Form.Field>
+            <Form.Label htmlFor="email">E-mail</Form.Label>
+            <Form.Input type="email" name="email" />
+            <Form.ErrorMessage field="email" />
+          </Form.Field>
+
+          <Form.Field>
+            <Form.Label htmlFor="password">Senha</Form.Label>
+            <Form.Input type="password" name="password" />
+            <Form.ErrorMessage field="password" />
+          </Form.Field>
+
+          <Form.Field>
+            <Form.Label className="flex items-center justify-between">
+              Tecnologias
+              <button
+                type="button"
+                onClick={addNewTech}
+                className="text-emerald-500 text-sm"
+              >
+                Adicionar
+              </button>
+            </Form.Label>
+            {fields.map((field, index) => (
+              <Form.Field key={field.id}>
+                <div className="flex gap-2 items-center">
+                  <Form.Input type="text" name={`techs.${index}.title`} />
+
+                  <button
+                    className="text-red-500 text-lg"
+                    onClick={() => removeTech(index)}
+                    type="button"
+                  >
+                    ⨉
+                  </button>
+                </div>
+                <Form.ErrorMessage field={`techs.${index}.title`} />
+              </Form.Field>
+            ))}
+            <Form.ErrorMessage field="techs" />
+          </Form.Field>
+
+          <button
+            disabled={isSubmitting}
+            className="bg-emerald-500 rounded font-semibold text-white h-10 hover:bg-emerald-600 disabled:opacity-10 disabled:cursor-not-allowed"
+            type="submit"
+          >
+            Salvar
+          </button>
+        </form>
+      </FormProvider>
 
       <pre>{output}</pre>
     </main>
